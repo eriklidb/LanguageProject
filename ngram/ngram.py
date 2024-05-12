@@ -13,6 +13,7 @@ class NGramModel:
         self._ngram_stores = {}
         self._UNKNOWN = '<UNKNOWN>'
         self._START = '<START>'
+        self._SPECIAL_WORDS = [self._UNKNOWN, self._START]
         self._w2i[self._UNKNOWN] = len(self._i2w)
         self._i2w.append(self._UNKNOWN)
         self._w2i[self._START] = len(self._i2w)
@@ -100,7 +101,7 @@ class NGramModel:
             idx = len(self._i2w)
             self._w2i[word] = idx
             self._i2w.append(word)
-        if word != self._START:
+        if word not in self._SPECIAL_WORDS:
             self._trie.add_word(word, n)
 
 
@@ -133,7 +134,6 @@ class NGramModel:
                 idx = self._w2i[cand]
                 ngram = subctx + [idx]
                 freq = self.freq(ngram)
-                print('freq', freq, 'for ngram', ngram)
                 freqs[k][i] = freq
                 tot_freq += freq
             for i in range(len(candidates)):
@@ -141,19 +141,28 @@ class NGramModel:
                     probs[k][i] = freqs[k][i] / tot_freq
                 else:
                     probs[k][i] = 1 / len(candidates)
-                print(k, freqs[k])
 
-        BASE_WEIGHT = 0.01
+        BASE_WEIGHT = 0.00001
         weights = [BASE_WEIGHT] * len(candidates)
+        N_WEIGHT = 0.99
+        DEFAULT_WEIGHT = 0.01 - BASE_WEIGHT
         total_weight = 0
         for i in range(len(candidates)):
             for k in range(len(context)+1):
-                weights[i] += probs[k][i]
+                if k == self._n - 1:
+                    weights[i] += N_WEIGHT * probs[k][i] 
+                else:
+                    weights[i] += DEFAULT_WEIGHT * probs[k][i]
+                
             total_weight += weights[i]
         
         for i in range(len(candidates)):
             weights[i] /= total_weight
 
+        debug = list(zip(weights, candidates))
+        debug.sort(reverse=True)
+        ddd = min(len(debug), 3)
+        print(debug[:ddd])
         if tot > 0:
             prob = np.array(weights)
             completions = np.random.choice(candidates,\
@@ -176,7 +185,7 @@ class NGramModel:
 
     def clean(self, phrase):
         phrase = phrase.strip().lower()
-        phrase = re.sub('[^a-z\' ]', '', phrase)
+        phrase = re.sub('[^a-z\'\s]', '', phrase)
         phrase = re.sub('\s+', ' ', phrase)
         return phrase
 

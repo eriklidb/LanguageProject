@@ -1,39 +1,51 @@
 import os
 from ngram import NGramModel
+from data import DataSource
 
 
 def main():
+    data_path = 'data'
     model_path = 'model.txt'
+    
+    source = DataSource(data_path)
     if os.path.isfile(model_path):
+        print('Loading...')
         model = NGramModel.load(model_path)
+        print('Done loading.')
     else:
+        print('Teaching...')
         model = NGramModel(3)
-    with open('vocab.txt', 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            line = line.strip()
-            pair = line.split(',')
-            word = pair[0]
-            if len(pair) >= 2:
-                freq = int(pair[1])
-            else:
-                freq = 1
-            model.learn(word)
+        for sentence in source.sentences():
+            model.learn(sentence)
+        print('Done teaching.')
 
     while True:
         print('> ', end='')
-        word = input()
-        if word == 'quit()' or word == '.q':
+        text = input()
+        if text == 'quit()' or text == '.q':
             break
         else:
-            #model.learn(word)
-            w = model.completions('the big boat was the', word, -1)
+            context, keystrokes = context_and_keystrokes(text)
+            w = model.completions(context, keystrokes, 3)
             print(w)
-
+    
+    print('Saving...')
     model.save(model_path)
+    print('Done saving.')
 
 def context_and_keystrokes(text):
     if text.endswith(' '):
-        pass
+        keystrokes = ''
+        context = text.strip()
+    else:
+        split = text.split()
+        if len(split) > 0:
+            keystrokes = text.split()[-1]
+        else:
+            keystrokes = ''
+        context = text[:-len(keystrokes)]
+    return context, keystrokes
+
 
 if __name__ == '__main__':
     main()
