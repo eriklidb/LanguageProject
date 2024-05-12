@@ -51,7 +51,8 @@ class Window(tk.Tk):
 
     def handle_word_press(self, event: tk.Event) -> None:
         pressed_word = event.widget.cget("text")
-        self.correct_text(pressed_word)
+        if pressed_word != "":
+            self.correct_text(pressed_word)
 
     def update_displayed_words(self) -> None:
         input_str = self.text_input.get(1.0, "end-1c")
