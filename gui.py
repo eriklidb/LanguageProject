@@ -3,6 +3,7 @@
 
 import tkinter as tk
 from word_probabilities import WordProbabilities, ExampleWords
+from ngram_probabilities import NGramProbabilities
 
 class Window(tk.Tk):
     word_probabilities: WordProbabilities
@@ -63,5 +64,6 @@ class Window(tk.Tk):
 
 # Start the event loop.
 if __name__ == '__main__':
-    window = Window()
+    probabilities = NGramProbabilities('model.txt')
+    window = Window(word_probabilities=probabilities)
     window.mainloop()

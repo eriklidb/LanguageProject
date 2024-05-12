@@ -28,8 +28,6 @@ class DataSource:
         return
 
 
-
-
 def split(line):
     split = re.split('\.(?=(\s+[A-Z])|$)', line)
     for s in split:

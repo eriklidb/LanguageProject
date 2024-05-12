@@ -158,15 +158,17 @@ class NGramModel:
         
         for i in range(len(candidates)):
             weights[i] /= total_weight
-
-        if deterministic:
+        
+        if tot <= 0:
+            return [], []
+        elif deterministic:
             det = list(zip(weights, candidates))
             det.sort(reverse=True)
             probs, completions = list(zip(*det[:n]))
             completions = list(completions)
             probs = list(probs)
             return completions, probs
-        elif tot > 0:
+        else:
             prob = np.array(weights)
             indices = np.random.choice(len(candidates),\
                     size=n,\
@@ -178,7 +180,6 @@ class NGramModel:
             completions = list(completions)
             probs = list(probs)
             return completions, probs
-        return [], []
 
         
     def transform_input(self, phrase):

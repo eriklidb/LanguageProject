@@ -1,7 +1,7 @@
 import os
 from ngram import NGramModel
 from data import DataSource
-
+from common import context_and_keystrokes
 
 def main():
     data_path = 'data'
@@ -33,19 +33,6 @@ def main():
     print('Saving...')
     model.save(model_path)
     print('Done saving.')
-
-def context_and_keystrokes(text):
-    if text.endswith(' '):
-        keystrokes = ''
-        context = text.strip()
-    else:
-        split = text.split()
-        if len(split) > 0:
-            keystrokes = text.split()[-1]
-        else:
-            keystrokes = ''
-        context = text[:-len(keystrokes)]
-    return context, keystrokes
 
 
 if __name__ == '__main__':
