@@ -18,10 +18,10 @@ def main():
         for sentence in source.sentences():
             model.learn(sentence)
         print('Done teaching.')
+        print('Saving...')
+        model.save(model_path)
+        print('Done saving.')
     
-    print('Saving...')
-    model.save(model_path)
-    print('Done saving.')
 
     while True:
         print('> ', end='')
