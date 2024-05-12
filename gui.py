@@ -10,10 +10,11 @@ class Window(tk.Tk):
     buffer_words: list[str] = []
     background: str = 'white'
 
-    def __init__(self, num_words_displayed=10):
+    def __init__(self, word_probabilities=ExampleWords(), num_words_displayed=10):
         super().__init__()
-
+        self.word_probabilities = word_probabilities
         self.num_words_displayed = num_words_displayed
+
         self.title("Word Predictor")
         #self.geometry('400x200') 
         self.configure(background='white')
@@ -37,8 +38,6 @@ class Window(tk.Tk):
         self.input_txt = tk.Text(self, height = 10, width = 60) 
         self.input_txt.grid(sticky="W", row=self.num_words_displayed + 2, column=0, columnspan=2)
         self.input_txt.bind("<KeyRelease>", self.handle_keystroke)
-
-        self.word_probabilities = ExampleWords()
 
     def handle_keystroke(self, event):
         inp = self.input_txt.get(1.0, "end-1c")
