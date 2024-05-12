@@ -8,7 +8,6 @@ from ngram_probabilities import NGramProbabilities
 class Window(tk.Tk):
     word_probabilities: WordProbabilities
     num_words_displayed: int
-    word_buffer: list[str] = []
     background: str = 'white'
 
     label_header_word: tk.Label
@@ -48,11 +47,10 @@ class Window(tk.Tk):
 
     def handle_keystroke(self, _event: tk.Event) -> None:
         input_str = self.text_input.get(1.0, "end-1c")
-        self.word_buffer = input_str.split()
-        self.update_displayed_words()
+        self.update_displayed_words(input_str)
 
-    def update_displayed_words(self) -> None:
-        words, probs = self.word_probabilities.most_likely_words(self.word_buffer, self.num_words_displayed)
+    def update_displayed_words(self, input_str: str) -> None:
+        words, probs = self.word_probabilities.most_likely_words(input_str, self.num_words_displayed)
         for i in range(self.num_words_displayed):
             text_word = ""
             text_prob = ""

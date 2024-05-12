@@ -9,8 +9,9 @@ class NGramProbabilities(WordProbabilities):
     def __init__(self, model_path):
         self._model = NGramModel.load(model_path)
 
-    def most_likely_words(self, current_words: list[str], n: int) -> tuple[list[str], list[float]]:
-        text = ' '.join(current_words)
-        context, keystrokes = context_and_keystrokes(text)
+    def most_likely_words(self, input_str: str, n: int) -> tuple[list[str], list[float]]:
+        #if len(input_str) == 0:
+        #    return [], []
+        context, keystrokes = context_and_keystrokes(input_str)
         return self._model.completions(context, keystrokes, n)
 
