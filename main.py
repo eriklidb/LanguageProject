@@ -22,9 +22,9 @@ def main():
         model.save(model_path)
         print('Done saving.')
     
-
+    
     while True:
-        print('> ', end='')
+        print('(.q to quit) > ', end='')
         text = input()
         if text == 'quit()' or text == '.q':
             break
