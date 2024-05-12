@@ -10,7 +10,13 @@ class Window(tk.Tk):
     buffer_words: list[str] = []
     background: str = 'white'
 
-    def __init__(self, word_probabilities=ExampleWords(), num_words_displayed=10):
+    header_label_word: tk.Label
+    header_label_prob: tk.Label
+    word_labels: list[tk.Label]
+    prob_labels: list[tk.Label]
+    input_txt: tk.Text
+
+    def __init__(self, word_probabilities: WordProbabilities = ExampleWords(), num_words_displayed: int = 10) -> None:
         super().__init__()
         self.word_probabilities = word_probabilities
         self.num_words_displayed = num_words_displayed
@@ -39,12 +45,12 @@ class Window(tk.Tk):
         self.input_txt.grid(sticky="W", row=self.num_words_displayed + 2, column=0, columnspan=2)
         self.input_txt.bind("<KeyRelease>", self.handle_keystroke)
 
-    def handle_keystroke(self, event):
+    def handle_keystroke(self, _event: tk.Event) -> None:
         inp = self.input_txt.get(1.0, "end-1c")
         self.buffer = inp.split()
         self.update_displayed_words()
 
-    def update_displayed_words(self):
+    def update_displayed_words(self) -> None:
         words, probs = self.word_probabilities.most_likely_words(self.buffer, self.num_words_displayed)
         for i in range(self.num_words_displayed):
             text_word = ""
