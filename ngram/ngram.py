@@ -105,14 +105,13 @@ class NGramModel:
             self._trie.add_word(word, n)
 
 
-    def completions(self, context, keystrokes, n=1):
+    def completions(self, context, keystrokes, n=1, deterministic=True):
         context = self.transform_input(context) 
         if self._n == 1:
             context = []
         elif len(context) > self._n - 1:
             context = context[-(self._n - 1):]
 
-        print('context', context)
         tot, candidates, _ = self._trie.get_words(keystrokes)
         if n < 0:
             n = len(candidates) 
@@ -142,6 +141,7 @@ class NGramModel:
                 else:
                     probs[k][i] = 1 / len(candidates)
 
+        # These should be lambda parameters FIXME
         BASE_WEIGHT = 0.00001
         weights = [BASE_WEIGHT] * len(candidates)
         N_WEIGHT = 0.99
@@ -159,24 +159,31 @@ class NGramModel:
         for i in range(len(candidates)):
             weights[i] /= total_weight
 
-        debug = list(zip(weights, candidates))
-        debug.sort(reverse=True)
-        ddd = min(len(debug), 3)
-        print(debug[:ddd])
-        if tot > 0:
+        if deterministic:
+            det = list(zip(weights, candidates))
+            det.sort(reverse=True)
+            probs, completions = list(zip(*det[:n]))
+            completions = list(completions)
+            probs = list(probs)
+            return completions, probs
+        elif tot > 0:
             prob = np.array(weights)
-            completions = np.random.choice(candidates,\
+            indices = np.random.choice(len(candidates),\
                     size=n,\
                     p=prob,\
                     replace=False)
-            return completions 
-        return []
+            sampled = list(map(lambda i: (weights[i], candidates[i]), indices))
+            sampled.sort(reverse=True)
+            probs, completions = list(zip(*sampled[:n]))
+            completions = list(completions)
+            probs = list(probs)
+            return completions, probs
+        return [], []
 
         
     def transform_input(self, phrase):
         phrase = self.clean(phrase)
         words = phrase.split()
-        print('words', words)
         words = map(lambda w: w if w in self._w2i else self._UNKNOWN, words)
         padding = [self._START] * (self._n - 1)
         words = padding + list(words)
