@@ -26,8 +26,9 @@ def main():
             break
         else:
             context, keystrokes = context_and_keystrokes(text)
-            w = model.completions(context, keystrokes, 3)
-            print(w)
+            completions, probs = model.completions(context, keystrokes, 3)
+            print(completions)
+            print(probs)
     
     print('Saving...')
     model.save(model_path)
