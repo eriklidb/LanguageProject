@@ -18,6 +18,10 @@ def main():
         for sentence in source.sentences():
             model.learn(sentence)
         print('Done teaching.')
+    
+    print('Saving...')
+    model.save(model_path)
+    print('Done saving.')
 
     while True:
         print('> ', end='')
@@ -30,10 +34,6 @@ def main():
             print(completions)
             print(probs)
     
-    print('Saving...')
-    model.save(model_path)
-    print('Done saving.')
-
 
 if __name__ == '__main__':
     main()
