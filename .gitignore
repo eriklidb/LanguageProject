@@ -162,3 +162,5 @@ cython_debug/
 # Custom
 data
 model.txt
+samples.txt
+neural_model

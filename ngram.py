@@ -2,7 +2,8 @@
 
 import re
 import numpy as np
-
+from data import Special, clean
+from trie import FreqTrie
 
 class NGramModel:
     def __init__(self, n=2):
@@ -11,13 +12,9 @@ class NGramModel:
         self._w2i = {}
         self._i2w = []
         self._ngram_stores = {}
-        self._UNKNOWN = '<UNKNOWN>'
-        self._START = '<START>'
-        self._SPECIAL_WORDS = [self._UNKNOWN, self._START]
-        self._w2i[self._UNKNOWN] = len(self._i2w)
-        self._i2w.append(self._UNKNOWN)
-        self._w2i[self._START] = len(self._i2w)
-        self._i2w.append(self._START)
+        self._SPECIAL_WORDS = [Special.UNKNOWN, Special.START]
+        self.add_word(Special.UNKNOWN)
+        self.add_word(Special.START)
         for i in range(1, n+1):
             self._ngram_stores[i] = NGramStore(i)
 
@@ -29,7 +26,7 @@ class NGramModel:
     
     def learn(self, sentence):
         words = sentence.split()
-        padding = [self._START] * (self._n - 1)
+        padding = [Special.START] * (self._n - 1)
         words = padding + words
         for i in range(len(words)):
             word = words[i]
@@ -40,6 +37,14 @@ class NGramModel:
                 kgram_words = words[i-k:i+1]
                 kgram = list(map(lambda w: self._w2i[w], kgram_words))
                 self.add_ngram(kgram)
+
+
+    def learn_sample(self, context, label):
+        words = f'{context} {label}'.split()
+        for word in words:
+            self.add_word(word)
+        kgram = list(map(lambda w: self._w2i[w], words))
+        self.add_ngram(kgram)
 
 
     def save(self, path):
@@ -183,19 +188,13 @@ class NGramModel:
 
         
     def transform_input(self, phrase):
-        phrase = self.clean(phrase)
+        phrase = clean(phrase)
         words = phrase.split()
-        words = map(lambda w: w if w in self._w2i else self._UNKNOWN, words)
-        padding = [self._START] * (self._n - 1)
+        words = map(lambda w: w if w in self._w2i else Special.UNKNOWN, words)
+        padding = [Special.START] * (self._n - 1)
         words = padding + list(words)
         indices = list(map(lambda w: self._w2i[w], words))
         return indices
-
-    def clean(self, phrase):
-        phrase = phrase.strip().lower()
-        phrase = re.sub('[^a-z\'\s]', '', phrase)
-        phrase = re.sub('\s+', ' ', phrase)
-        return phrase
 
 
 class NGramStore:
@@ -270,94 +269,3 @@ class NGramStore:
                     queue.append((next_stub, next_))
         return ngrams
 
-
-class FreqTrie:
-    def __init__(self):
-        self._root = FreqTrieNode()
-    
-
-    def add_word(self, word, n=1):
-        self._root.add_suffix(word, n)
-
-
-    def get_words(self, prefix):
-        subroot = self._root.child(prefix, create=False)
-        if subroot is None:
-            return (0, [], [])
-
-        nodes = subroot.descendants()
-        total_freqs = subroot.subfreq()
-        words = []
-        freqs = []
-
-        for node in nodes:
-            if node.freq() > 0:
-                words.append(node.word())
-                freqs.append(node.freq())
-
-        return (total_freqs, words, freqs)
-
-
-
-class FreqTrieNode:
-    def __init__(self, word=None):
-        if word is None:
-            self._word = ''
-        else:
-            self._word = word
-        self._freq = 0
-        self._subfreq = 0
-        self._children = {}
-
-    
-    def add_suffix(self, suffix, n=1):
-        if suffix == '':
-            self.increment_freq(n)
-        else:
-            self.increment_subfreq(n)
-            head = suffix[0]
-            tail = suffix[1:]
-            self.child(head).add_suffix(tail)
-    
-
-    def increment_freq(self, n=1):
-        self._freq += n
-
-    
-    def increment_subfreq(self, n=1):
-        self._subfreq += n
-
-
-    def word(self):
-        return self._word
-
-
-    def freq(self):
-        return self._freq
-
-
-    def subfreq(self):
-        return self._subfreq
-
-
-    def child(self, suffix, create=True):
-        if suffix == '':
-            return self
-        else:
-            head = suffix[0]
-            tail = suffix[1:]
-            if head not in self._children:
-                if not create:
-                    return None
-                child_word = self._word + head
-                child = FreqTrieNode(child_word)
-                self._children[head] = child
-            return self._children[head].child(tail)
-
-
-    def descendants(self):
-        nodes = []
-        for child in self._children.values():
-            nodes.append(child)
-            nodes.extend(child.descendants())
-        return nodes

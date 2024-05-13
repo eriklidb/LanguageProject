@@ -1,22 +1,23 @@
 import os
 from ngram import NGramModel
-from data import DataSource
-from common import context_and_keystrokes
+from data import DataSource, clean, context_and_keystrokes
 
 def main():
     data_path = 'data'
     model_path = 'model.txt'
     
+    k = 3
     source = DataSource(data_path)
+    source.save_samples('samples.txt', 0, k)
     if os.path.isfile(model_path):
         print('Loading...')
         model = NGramModel.load(model_path)
         print('Done loading.')
     else:
         print('Teaching...')
-        model = NGramModel(3)
-        for sentence in source.sentences():
-            model.learn(sentence)
+        model = NGramModel(k)
+        for sample in source.labeled_samples(0, k-1):
+            model.learn_sample(*sample)
         print('Done teaching.')
         print('Saving...')
         model.save(model_path)
