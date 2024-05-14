@@ -4,11 +4,13 @@
 import tkinter as tk
 from word_probabilities import WordProbabilities, ExampleWords
 from ngram_probabilities import NGramProbabilities
+import argparse
 
 class Window(tk.Tk):
     word_probabilities: WordProbabilities
     num_words_displayed: int
     background: str = 'white'
+    active_background: str = 'yellow'
 
     label_header_word: tk.Label
     label_header_prob: tk.Label
@@ -33,12 +35,14 @@ class Window(tk.Tk):
         self.labels_word = []
         self.labels_prob = []
         for i in range(self.num_words_displayed):
-            label_word = tk.Label(self, text = "", background=self.background) 
-            label_word.grid(sticky="W", row=i+1, column=0)
+            label_word = tk.Label(self, text="", background=self.background) 
+            label_word.grid(sticky="W", row=i+1, column=0, ipadx=10)
             label_word.bind("<Button-1>", self.handle_word_press)
+            label_word.bind("<Enter>", self.handle_enter_label)
+            label_word.bind("<Leave>", self.handle_leave_label)
             self.labels_word.append(label_word)
 
-            label_prob = tk.Label(self, text = "", background=self.background) 
+            label_prob = tk.Label(self, text="", background=self.background) 
             label_prob.grid(sticky="W", row=i+1, column=1)
             self.labels_prob.append(label_prob)
 
@@ -53,6 +57,13 @@ class Window(tk.Tk):
         pressed_word = event.widget.cget("text")
         if pressed_word != "":
             self.correct_text(pressed_word)
+
+    def handle_enter_label(self, event: tk.Event) -> None:
+        if event.widget.cget("text") != "":
+            event.widget.config(background=self.active_background)
+
+    def handle_leave_label(self, event: tk.Event) -> None:
+        event.widget.config(background=self.background)
 
     def update_displayed_words(self) -> None:
         input_str = self.text_input.get(1.0, "end-1c")
@@ -84,6 +95,13 @@ class Window(tk.Tk):
             
 # Start the event loop.
 if __name__ == '__main__':
-    probabilities = NGramProbabilities('model.txt')
-    window = Window(word_probabilities=probabilities)
+    parser = argparse.ArgumentParser(description='Start word prediciton GUI.', usage='\n* -m Model file path. -n Number of word suggestions to display.')
+    parser.add_argument('-m', type=str, default='./model.txt', help='Model file path')
+    parser.add_argument('-n', type=int, default=20, help='Number of word suggestions to display.')
+    arguments = parser.parse_args()
+    model_path = arguments.m
+    num_word_displayed = arguments.n
+
+    probabilities = NGramProbabilities(model_path)
+    window = Window(word_probabilities=probabilities, num_words_displayed=num_word_displayed)
     window.mainloop()
