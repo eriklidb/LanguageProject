@@ -5,6 +5,7 @@ import tkinter as tk
 from word_probabilities import WordProbabilities, ExampleWords
 from ngram_probabilities import NGramProbabilities
 import argparse
+from neural_probabilities import NeuralProbabilities
 
 class Window(tk.Tk):
     word_probabilities: WordProbabilities
@@ -103,5 +104,6 @@ if __name__ == '__main__':
     num_word_displayed = arguments.n
 
     probabilities = NGramProbabilities(model_path)
+    probabilities = NeuralProbabilities('neural_model')
     window = Window(word_probabilities=probabilities, num_words_displayed=num_word_displayed)
     window.mainloop()

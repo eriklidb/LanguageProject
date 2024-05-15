@@ -3,9 +3,8 @@
 
 import os
 from ngram import NGramModel
-from data import DataSource, DataSourceNTComments
-from common import context_and_keystrokes
 import argparse
+from data import DataSource, DataSourceNTComments, clean, context_and_keystrokes
 
 def main():
     parser = argparse.ArgumentParser(description='Train word prediction model.', usage='\n* -m Model file path. -d Dataset directory path. -n Number of datapoints to read.')
@@ -19,6 +18,9 @@ def main():
     num_datapoints = arguments.n
     save_data = arguments.s
     
+    #k = 3
+    #source = DataSource(data_path)
+    #source.save_samples('samples.txt', 0, k-1)
     if os.path.isfile(model_path):
         print('Loading...')
         model = NGramModel.load(model_path)
@@ -31,9 +33,11 @@ def main():
             source = DataSource(data_path)
             sentences = lambda: source.sentences()
         print('Teaching...')
-        model = NGramModel(3)
-        for sentence in sentences():
-            model.learn(sentence)
+        model = NGramModel(k)
+        #for sentence in sentences():
+        #    model.learn(sentence)
+        for sample in source.labeled_samples(0, k-1):
+            model.learn_sample(*sample)
         print('Done teaching.')
         if save_data:
             print('Saving...')

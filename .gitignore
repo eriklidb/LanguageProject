@@ -164,3 +164,5 @@ data
 data_nytimes
 model.txt
 *.csv
+samples.txt
+neural_model
