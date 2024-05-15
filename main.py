@@ -4,7 +4,7 @@
 import os
 from ngram import NGramModel
 import argparse
-from data import DataSource, DataSourceNTComments, clean, context_and_keystrokes
+from data import DataSource, DataSourceNTComments, context_and_keystrokes
 
 def main():
     parser = argparse.ArgumentParser(description='Train word prediction model.', usage='\n* -m Model file path. -d Dataset directory path. -n Number of datapoints to read.')
