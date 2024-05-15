@@ -81,7 +81,7 @@ class DataSource:
             words = padding + words
             for i in range(max_context_len, len(words)):
                 kgram_label = words[i]
-                for k in range(min_context_len, max_context_len):
+                for k in range(min_context_len, max_context_len + 1):
                     kgram_context = ' '.join(words[i-k:i])
                     yield kgram_context, kgram_label
 

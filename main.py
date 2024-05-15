@@ -8,7 +8,7 @@ def main():
     
     k = 3
     source = DataSource(data_path)
-    source.save_samples('samples.txt', 0, k)
+    source.save_samples('samples.txt', 0, k-1)
     if os.path.isfile(model_path):
         print('Loading...')
         model = NGramModel.load(model_path)

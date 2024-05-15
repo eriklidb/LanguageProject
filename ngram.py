@@ -51,19 +51,19 @@ class NGramModel:
         with open(path, 'w', encoding='utf-8') as f:
             vocab_size = len(self._i2w)
             header = f'{self._n} {vocab_size}\n'
-            f.writelines(header)
+            f.writelines([header])
             for i in range(vocab_size):
                 idx = i
                 word = self._i2w[idx]
                 freq = self._ngram_stores[1].freq([idx])
-                f.writelines(f'{idx} {word} {freq}\n')
+                f.writelines([f'{idx} {word} {freq}\n'])
             for k in range(2, self._n+1):
                 kgrams = self._ngram_stores[k].all_ngrams()
                 count = len(kgrams)
                 f.writelines(f'{count}\n')
                 for kgram, freq in kgrams:
                     kgram_str = ' '.join(map(str, kgram))
-                    f.writelines(f'{kgram_str} {freq}\n')
+                    f.writelines([f'{kgram_str} {freq}\n'])
 
 
     def load(path):

@@ -41,6 +41,7 @@ class NeuralPredictor(torch.nn.Module):
         self.train()
         for epoch in range(epochs):
             print('epoch', epoch)
+            epoch_loss = 0.0
             for i, data in enumerate(data_src.labeled_samples(1, max_ctx_len)):
                 # get the inputs; data is a list of [inputs, labels]
                 context, label_ = data #= NeuralPredictor.prep_sample(data)
@@ -48,7 +49,7 @@ class NeuralPredictor(torch.nn.Module):
                 label = self._w2i[label]
                 label -= self._NUM_SPECIAL_WORDS
                 label = torch.tensor([[label]]).to(self._device)
-                label = torch.nn.functional.one_hot(label, num_classes=self._output_size)\
+                label = torch.nn.functional.one_hot(label, num_classes = self._vocab_size - self._NUM_SPECIAL_WORDS)\
                         .float()
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -56,15 +57,20 @@ class NeuralPredictor(torch.nn.Module):
                 # forward + backward + optimize
                 outputs = self(context)
                 pred = torch.argmax(outputs, dim=-1) + self._NUM_SPECIAL_WORDS
-                loss = criterion(outputs, label)
+                #print(' ctx:', context)
+                #print('labl:', label_)
+                #print('pred:', self._i2w[pred[0][0]])
+                loss = criterion(outputs[0], label[0])
                 loss.backward()
                 optimizer.step()
                 
                 # print statistics
                 running_loss += loss.item()
-                if i % 200 == 199:    # print every 200 mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
+                epoch_loss += loss.item()
+                if i % 2000 == 1999:    # print every 200 mini-batches
+                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                     running_loss = 0.0
+            print(f'[epoch {epoch + 1}] loss: {epoch_loss / i:.3f}')
         self.eval()
         print('Finished Training')
 
@@ -101,8 +107,8 @@ class NeuralPredictor(torch.nn.Module):
         self.to(self._device)
 
     
-    def load(path):
-        model = NeuralPredictor()
+    def load(path, device='cpu'):
+        model = NeuralPredictor(device=device)
         
         state = os.path.join(path, 'state.pt')
         words = os.path.join(path, 'words.txt')
@@ -117,7 +123,7 @@ class NeuralPredictor(torch.nn.Module):
         
         model._init_params()
 
-        model.load_state_dict(torch.load(state))
+        model.load_state_dict(torch.load(state, map_location=torch.device(device)))
         model.eval()
         return model
 
@@ -131,7 +137,7 @@ class NeuralPredictor(torch.nn.Module):
 
         with open(words, 'w', encoding='utf-8') as f:
             for word in self._i2w[self._NUM_SPECIAL_WORDS:]:
-                f.writelines(f'{word}\n')
+                f.writelines([f'{word}\n'])
 
     
     def add_word(self, word):
@@ -154,7 +160,6 @@ class NeuralPredictor(torch.nn.Module):
         x = list(x)
         x = map(lambda ctx: [Special.START] if len(ctx) == 0 else ctx, x)
         x = list(x)
-        print(x)
         max_len = max(map(len, x))
         x = map(\
                 lambda ctx: [Special.PADDING] * (max_len - len(ctx)) + ctx,\
@@ -171,8 +176,9 @@ class NeuralPredictor(torch.nn.Module):
                 list(map(lambda w: self._w2i[w], ctx)),\
                 x))
         ctx = torch.tensor(x, dtype=torch.long).to(self._device)
+        ctx = ctx.permute((1, 0))
         ctx_emb = self._word_emb(ctx).float()
- 
+        
         _, sentence_state = self._word_rnn(ctx_emb)
 
         logits = self._final_layer(sentence_state)
@@ -219,7 +225,7 @@ if __name__ == '__main__':
     from data import DataSource
     data_path = 'data'
     data_src = DataSource(data_path)
-    model = NeuralPredictor(data_src, 2, epochs=1)
+    model = NeuralPredictor(data_src, 3, epochs=3)
     print("Save? (Y/n)")
     while True:
         ans = input()
