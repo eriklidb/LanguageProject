@@ -19,8 +19,8 @@ def main():
     save_data = arguments.s
     
     k = 3
-    #source = DataSource(data_path)
-    #source.save_samples('samples.txt', 0, k-1)
+    #source = DataSource(data_path, -1)
+    #source.save_samples('samples.txt')
     if os.path.isfile(model_path):
         print('Loading...')
         model = NGramModel.load(model_path)
@@ -34,7 +34,7 @@ def main():
         model = NGramModel(k)
         #for sentence in sentences():
         #    model.learn(sentence)
-        for sample in source.labeled_samples(0, k-1):
+        for sample in source.labeled_samples():
             model.learn_sample(*sample)
         print('Done teaching.')
         if save_data:

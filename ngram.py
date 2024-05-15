@@ -12,9 +12,9 @@ class NGramModel:
         self._w2i = {}
         self._i2w = []
         self._ngram_stores = {}
-        self._SPECIAL_WORDS = [Special.UNKNOWN, Special.START]
-        self.add_word(Special.UNKNOWN)
-        self.add_word(Special.START)
+        self._SPECIAL_WORDS = Special.all()
+        for spec in self._SPECIAL_WORDS:
+            self.add_word(spec)
         for i in range(1, n+1):
             self._ngram_stores[i] = NGramStore(i)
 
@@ -41,10 +41,15 @@ class NGramModel:
 
     def learn_sample(self, context, label):
         words = f'{context} {label}'.split()
+        if len(words) < self._n:
+            padding = [Special.PADDING] * (self._n - len(words))
+            words = padding + words
         for word in words:
             self.add_word(word)
-        kgram = list(map(lambda w: self._w2i[w], words))
-        self.add_ngram(kgram)
+        ids = list(map(lambda w: self._w2i[w], words))
+        for k in range(1, self._n + 1):
+            kgram = ids[-k:]
+            self.add_ngram(kgram)
 
 
     def save(self, path):

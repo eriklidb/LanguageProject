@@ -84,16 +84,15 @@ class DataSource:
                         yield sentence
 
 
-    def labeled_samples(self, min_context_len, max_context_len):
+    def labeled_samples(self):
         for sentence in self.sentences():
+            sentence = f'{Special.START} {sentence}'
             words = sentence.split()
-            padding = [Special.START] * max_context_len
-            words = padding + words
-            for i in range(max_context_len, len(words)):
+            sentence_len = len(words)
+            for i in range(1, sentence_len):
                 kgram_label = words[i]
-                for k in range(min_context_len, max_context_len + 1):
-                    kgram_context = ' '.join(words[i-k:i])
-                    yield kgram_context, kgram_label
+                kgram_context = ' '.join(words[:i])
+                yield kgram_context, kgram_label
 
         """
         random.seed(seed)
@@ -118,9 +117,9 @@ class DataSource:
         """
 
 
-    def save_samples(self, path, min_ctx_len, max_ctx_len):
+    def save_samples(self, path):
         with open(path, 'w', encoding='utf-8') as f:
-            for sample, label in self.labeled_samples(min_ctx_len, max_ctx_len):
+            for sample, label in self.labeled_samples():
                 f.writelines(f'{sample},{label}\n')
 
     
