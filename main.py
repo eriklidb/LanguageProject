@@ -18,7 +18,7 @@ def main():
     num_datapoints = arguments.n
     save_data = arguments.s
     
-    #k = 3
+    k = 3
     #source = DataSource(data_path)
     #source.save_samples('samples.txt', 0, k-1)
     if os.path.isfile(model_path):
@@ -27,11 +27,9 @@ def main():
         print('Done loading.')
     else:
         if data_path in ["data_nytimes", "./data_nytimes", "./data_nytimes/", ".\\data_nytimes", ".\\data_nytimes\\"]:
-            source = DataSourceNTComments(data_path)
-            sentences = lambda: source.sentences(num_datapoints)
+            source = DataSourceNTComments(data_path, num_datapoints)
         else:
-            source = DataSource(data_path)
-            sentences = lambda: source.sentences()
+            source = DataSource(data_path, num_datapoints)
         print('Teaching...')
         model = NGramModel(k)
         #for sentence in sentences():

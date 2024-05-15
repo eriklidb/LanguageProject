@@ -23,7 +23,8 @@ class Special:
 
 
 class DataSource:
-    def __init__(self, path):
+    def __init__(self, path, num_datapoints):
+        self.num_datapoints = num_datapoints
         if os.path.isdir(path):
             self._path = path
             vocab_name = 'vocab.txt'
@@ -131,7 +132,8 @@ class DataSource:
         return encoding_type
         
 class DataSourceNTComments(DataSource):
-    def sentences(self, max_comments):
+    def sentences(self):
+        max_comments = self.num_datapoints
         #processed_comments = 0
         print("Reading New York Times dataset.")
         processed_comments = 0
