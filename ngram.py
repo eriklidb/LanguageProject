@@ -193,8 +193,8 @@ class NGramModel:
 
     def clean(self, phrase):
         phrase = phrase.strip().lower()
-        phrase = re.sub('[^a-z\'\s]', '', phrase)
-        phrase = re.sub('\s+', ' ', phrase)
+        phrase = re.sub('[^a-z\'\\s]', '', phrase)
+        phrase = re.sub('\\s+', ' ', phrase)
         return phrase
 
 
