@@ -94,27 +94,20 @@ class DataSource:
                 kgram_context = ' '.join(words[:i])
                 yield kgram_context, kgram_label
 
-        """
-        random.seed(seed)
-        for sentence in self.sentences():
-            words = sentence.split()
 
-            samples_per_sentence = int(sample_ratio * len(words))
-            samples_per_sentence = max(1, samples_per_sentence)
-            for i in range(samples_per_sentence):
-                ctx_len = int(random.random() * len(words))
-                label = words[ctx_len]
-                ctx = " ".join(words[:ctx_len])
-
-                splits_per_sample = int(split_ratio * len(label))
-                splits_per_sample = max(1, splits_per_sample)
-                for j in range(splits_per_sample):
-
-                    split = int(random.random() * len(label))
-                    partial = label[:split]
-                    sample = f'{ctx} {partial}'
-                    yield sample, label
-        """
+    def labeled_samples_batch(self, batch_size, discard_trailing=False):
+        batch_size = max(1, batch_size)
+        batch_ctx = []
+        batch_labels = []
+        for ctx, label in self.labeled_samples():
+            batch_ctx.append(ctx)
+            batch_labels.append(label)
+            if len(batch_labels) == batch_size:
+                yield batch_ctx, batch_labels
+                batch_ctx = []
+                batch_labels = []
+        if len(batch_labels) > 0 and not discard_trailing:
+            yield batch_ctx, batch_labels
 
 
     def save_samples(self, path):
@@ -129,7 +122,8 @@ class DataSource:
         with open(path, 'rb') as f:
             encoding_type = detect(f.read())['encoding']
         return encoding_type
-        
+       
+
 class DataSourceNTComments(DataSource):
     def sentences(self):
         max_comments = self.num_datapoints

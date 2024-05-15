@@ -39,36 +39,31 @@ class NeuralPredictor(torch.nn.Module):
         running_loss = 0.0
         print('Starting training')
         self.train()
+        batch_size = 32
         for epoch in range(epochs):
             print('epoch', epoch)
             epoch_loss = 0.0
-            for i, data in enumerate(data_src.labeled_samples(1, max_ctx_len)):
+            for i, data in enumerate(data_src.labeled_samples_batch(batch_size)):
                 # get the inputs; data is a list of [inputs, labels]
-                context, label_ = data #= NeuralPredictor.prep_sample(data)
-                label = Special.UNKNOWN if label_ not in self._w2i else label_
-                label = self._w2i[label]
-                label -= self._NUM_SPECIAL_WORDS
-                label = torch.tensor([[label]]).to(self._device)
-                label = torch.nn.functional.one_hot(label, num_classes = self._vocab_size - self._NUM_SPECIAL_WORDS)\
-                        .float()
+                contexts, labels = data #= NeuralPredictor.prep_sample(data)
+                labels = list(map(lambda l: Special.UNKNOWN if l not in self._w2i else l, labels))
+                labels = list(map(lambda l: self._w2i[l] - self._NUM_SPECIAL_WORDS, labels))
+                labels = torch.tensor(labels).to(self._device)
+                
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
                 # forward + backward + optimize
-                outputs = self(context)
-                pred = torch.argmax(outputs, dim=-1) + self._NUM_SPECIAL_WORDS
-                #print(' ctx:', context)
-                #print('labl:', label_)
-                #print('pred:', self._i2w[pred[0][0]])
-                loss = criterion(outputs[0], label[0])
+                outputs = self(contexts)
+                loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-                
+
                 # print statistics
                 running_loss += loss.item()
                 epoch_loss += loss.item()
-                if i % 2000 == 1999:    # print every 200 mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                if i % 200 == 199:    # print every 200 mini-batches
+                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
                     running_loss = 0.0
             print(f'[epoch {epoch + 1}] loss: {epoch_loss / i:.3f}')
         self.eval()
@@ -180,9 +175,10 @@ class NeuralPredictor(torch.nn.Module):
         ctx_emb = self._word_emb(ctx).float()
         
         _, sentence_state = self._word_rnn(ctx_emb)
+        sentence_state = sentence_state.squeeze(0)
 
         logits = self._final_layer(sentence_state)
-        return logits #self._softmax(logits)
+        return logits
 
 
     def prep_sample(sample):
@@ -224,8 +220,8 @@ class NeuralPredictor(torch.nn.Module):
 if __name__ == '__main__':
     from data import DataSource
     data_path = 'data'
-    data_src = DataSource(data_path)
-    model = NeuralPredictor(data_src, 3, epochs=3)
+    data_src = DataSource(data_path, -1)
+    model = NeuralPredictor(data_src, 3, epochs=10)
     print("Save? (Y/n)")
     while True:
         ans = input()
