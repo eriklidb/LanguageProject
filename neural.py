@@ -15,8 +15,8 @@ class NeuralPredictor(torch.nn.Module):
         self._trie = FreqTrie()
 
         self._NUM_SPECIAL_WORDS = Special.size()
-        self.add_word(Special.UNKNOWN)
         self.add_word(Special.PADDING)
+        self.add_word(Special.UNKNOWN)
         self.add_word(Special.START)
         CHARS = Special.all() + ['\''] + list(string.ascii_letters) + list(string.punctuation)
         self._c2i = {c:i for i,c in enumerate(CHARS)}
@@ -27,22 +27,23 @@ class NeuralPredictor(torch.nn.Module):
         self._init_params()
         if data_src is not None:
             if epochs is None:
-                self.train_model(data_src, max_ctx_len)
+                self.train_model(data_src)
             else:
-                self.train_model(data_src, max_ctx_len, epochs=epochs)
+                self.train_model(data_src, epochs=epochs)
 
 
-    def train_model(self, data_src, max_ctx_len, epochs=1):
+    def train_model(self, data_src, epochs=1):
         # Training example from https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html 
         criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
+        optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
         running_loss = 0.0
         print('Starting training')
         self.train()
         batch_size = 32
         for epoch in range(epochs):
-            print('epoch', epoch)
+            print('epoch', epoch+1)
             epoch_loss = 0.0
+            running_loss = 0.0
             for i, data in enumerate(data_src.labeled_samples_batch(batch_size)):
                 # get the inputs; data is a list of [inputs, labels]
                 contexts, labels = data #= NeuralPredictor.prep_sample(data)
@@ -65,7 +66,7 @@ class NeuralPredictor(torch.nn.Module):
                 if i % 200 == 199:    # print every 200 mini-batches
                     print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
                     running_loss = 0.0
-            print(f'[epoch {epoch + 1}] loss: {epoch_loss / i:.3f}')
+            print(f'[epoch {epoch + 1}] loss: {epoch_loss / (i+1):.3f}')
         self.eval()
         print('Finished Training')
 
@@ -94,10 +95,16 @@ class NeuralPredictor(torch.nn.Module):
         
 
         self._output_size = self._vocab_size - self._NUM_SPECIAL_WORDS
-        self._final_layer = torch.nn.Linear(\
+        layer_count = 10
+        layers = []
+        for i in range(layer_count):
+            layers.append(torch.nn.Linear(word_hidden_size, word_hidden_size))
+            layers.append(torch.nn.Sigmoid())
+
+        self._final = torch.nn.Sequential(*layers,\
+                torch.nn.Linear(\
                 word_hidden_size,\
-                self._output_size)
-        self._softmax = torch.nn.Softmax(dim=1)
+                self._output_size))
 
         self.to(self._device)
 
@@ -177,7 +184,7 @@ class NeuralPredictor(torch.nn.Module):
         _, sentence_state = self._word_rnn(ctx_emb)
         sentence_state = sentence_state.squeeze(0)
 
-        logits = self._final_layer(sentence_state)
+        logits = self._final(sentence_state)
         return logits
 
 
@@ -221,7 +228,7 @@ if __name__ == '__main__':
     from data import DataSource
     data_path = 'data'
     data_src = DataSource(data_path, -1)
-    model = NeuralPredictor(data_src, 3, epochs=10)
+    model = NeuralPredictor(data_src, 3, epochs=5)
     print("Save? (Y/n)")
     while True:
         ans = input()
