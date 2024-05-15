@@ -104,6 +104,6 @@ if __name__ == '__main__':
     num_word_displayed = arguments.n
 
     probabilities = NGramProbabilities(model_path)
-    probabilities = NeuralProbabilities('neural_model')
+    #probabilities = NeuralProbabilities('neural_model')
     window = Window(word_probabilities=probabilities, num_words_displayed=num_word_displayed)
     window.mainloop()

@@ -219,16 +219,13 @@ class NGramStore:
 
 
     def _stub_dict(self, stubgram, create=True):
-        curr = self._root
-        for i in range(self._n - 1):
-            idx = stubgram[i]
-            if idx not in curr:
-                if create:
-                    curr[idx] = {}
-                else:
-                    return None
-            curr = curr[idx]
-        return curr
+        idx = str(stubgram)
+        if idx not in self._root:
+            if create:
+                self._root[idx] = {}
+            else:
+                return None
+        return self._root[idx]
 
 
     def unigrams(self, stubgram):
@@ -256,16 +253,9 @@ class NGramStore:
 
     def all_ngrams(self):
         ngrams = []
-        queue = [([], self._root)]
-        while len(queue) > 0:
-            stub, curr = queue.pop(0)
-            if len(stub) == self._n:
-                ngrams.append((stub, curr))
-            else:
-                for idx in curr:
-                    next_ = curr[idx]
-                    next_stub = stub.copy()
-                    next_stub.append(idx)
-                    queue.append((next_stub, next_))
+        for stub in self._root:
+            stub_list = stub.strip('[]').split(', ')
+            for last in self._root[stub]:
+                ngrams.append((stub_list + [last], self._root[stub][last]))
         return ngrams
 
