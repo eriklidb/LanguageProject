@@ -2,7 +2,7 @@
 # Date: 2024.
 
 import tkinter as tk
-from word_probabilities import WordProbabilities, ExampleWords
+from word_probabilities import WordProbabilities 
 from ngram_probabilities import NGramProbabilities
 import argparse
 from neural_probabilities import NeuralProbabilities

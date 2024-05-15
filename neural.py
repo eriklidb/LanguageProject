@@ -1,6 +1,6 @@
 import string
 import os
-from data import Special, clean, context_and_keystrokes
+from data import Special, context_and_keystrokes
 from trie import FreqTrie
 import torch
 

@@ -6,7 +6,6 @@ import re
 import csv
 from tqdm import tqdm
 from chardet import detect
-import random
 
 
 class Special:
