@@ -6,7 +6,6 @@ import re
 import csv
 from tqdm import tqdm
 from chardet import detect
-import random
 
 
 class Special:
@@ -54,7 +53,7 @@ class DataSource:
     def _ensure_vocab(self):
         vocab = set()
         for sentence in self.sentences():
-            sentence = clean(sentence)
+            sentence = self.clean(sentence)
             words = sentence.split()
             for word in words:
                 vocab.add(word)
@@ -78,9 +77,9 @@ class DataSource:
             with open(path, 'r', encoding=encoding_type) as f:
                 for line in f.readlines():
                     line = line.strip()
-                    sentences = split(line)
+                    sentences = self.split(line)
                     for sentence in sentences:
-                        sentence = clean(sentence)
+                        sentence = self.clean(sentence)
                         yield sentence
 
 
@@ -122,7 +121,25 @@ class DataSource:
         with open(path, 'rb') as f:
             encoding_type = detect(f.read())['encoding']
         return encoding_type
-       
+
+    @staticmethod
+    def split(line):
+        split = re.split('\\.(?=(\\s+[A-Z])|$)', line)
+        for s in split:
+            # Because re.split behaves weirdly and includes lookahead and None
+            if not s or s.startswith(' '):
+                continue
+            yield s
+        return
+
+
+    @staticmethod
+    def clean(phrase):
+        phrase = phrase.strip().lower()
+        phrase = re.sub('[^a-z\'\\s]', '', phrase)
+        phrase = re.sub('\\s+', ' ', phrase)
+        return phrase
+
 
 class DataSourceNTComments(DataSource):
     def sentences(self):
@@ -160,7 +177,7 @@ class DataSourceNTComments(DataSource):
         split = re.split('\\.(?=(\\s+[A-Z])|$)', line)
         for s in split:
             # Remove HTML tags and other junk.
-            if not s or s.startswith(' ') or '<' in s or '>' in s or 'href=' in s or 'text=' in s or 'target=' in s or '&amp' in s:
+            if not s or s.startswith(' ') or 'href=' in s or 'text=' in s or 'target=' in s or '&amp' in s or 'http' in s or "www." in s:
                 continue
             yield s
         return
@@ -168,25 +185,8 @@ class DataSourceNTComments(DataSource):
     @staticmethod
     def clean(phrase):
         phrase = re.sub('<br/>', ' ', phrase) # Replace linebreak HTML symbol.
-        return clean(phrase)
+        return DataSource.clean(phrase)
         
-
-def split(line):
-    split = re.split('\\.(?=(\\s+[A-Z])|$)', line)
-    for s in split:
-        # Because re.split behaves weirdly and includes lookahead and None
-        if not s or s.startswith(' '):
-            continue
-        yield s
-    return
-
-
-def clean(phrase):
-    phrase = phrase.strip().lower()
-    phrase = re.sub('[^a-z\'\\s]', '', phrase)
-    phrase = re.sub('\\s+', ' ', phrase)
-    return phrase
-
 
 def context_and_keystrokes(text):
     if text.endswith(' '):
@@ -202,3 +202,4 @@ def context_and_keystrokes(text):
     return context, keystrokes
 
 
+       

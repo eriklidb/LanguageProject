@@ -1,8 +1,7 @@
 # Authored 2024.5 by Rasmus Nylander (nylanderDev)
 
-import re
 import numpy as np
-from data import Special, clean
+from data import Special, DataSource
 from trie import FreqTrie
 
 class NGramModel:
@@ -193,7 +192,7 @@ class NGramModel:
 
         
     def transform_input(self, phrase):
-        phrase = clean(phrase)
+        phrase = DataSource.clean(phrase)
         words = phrase.split()
         words = map(lambda w: w if w in self._w2i else Special.UNKNOWN, words)
         padding = [Special.START] * (self._n - 1)
