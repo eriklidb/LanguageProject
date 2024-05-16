@@ -202,4 +202,4 @@ def context_and_keystrokes(text):
     return context, keystrokes
 
 
-       
+

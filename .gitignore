@@ -166,3 +166,7 @@ model.txt
 *.csv
 samples.txt
 neural_model
+model_neural
+model_ngram.txt
+model_*.txt
+model_*/

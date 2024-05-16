@@ -217,9 +217,12 @@ class NeuralPredictor(torch.nn.Module):
 
 
 if __name__ == '__main__':
-    from data import DataSource
+    from data import DataSource, DataSourceNTComments
     data_path = 'data_nytimes'
-    data_src = DataSource(data_path, -1)
+    if data_path in ["data_nytimes", "./data_nytimes", "./data_nytimes/", ".\\data_nytimes", ".\\data_nytimes\\"]:
+        data_src = DataSourceNTComments(data_path, 300_000)
+    else:
+        data_src = DataSource(data_path, -1)
     print('Data source constructed')
     model = NeuralPredictor(data_src, 3, epochs=50)
     print("Save? (Y/n)")
