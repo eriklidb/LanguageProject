@@ -3,6 +3,7 @@
 import re
 import numpy as np
 import random
+import math
 
 
 class NGramModel:
@@ -61,7 +62,7 @@ class NGramModel:
                     kgram_str = ' '.join(map(str, kgram))
                     f.writelines(f'{kgram_str} {freq}\n')
 
-    def generate_sets(self, path, train, val, test):
+    def generate_sets(path):
         #train, val, test are supposed to add up to 1.
         #not the most efficient solution and haven't tested it but should work.
         samples = []
@@ -69,21 +70,38 @@ class NGramModel:
             for line in f:
                 samples.append(line)
         rand = np.random.permutation([x for x in range(len(samples))])
-        trainingset = samples[rand[0:len(np.ceil(rand*train))]]
-        validationset = samples[rand[len(np.ceil(rand*train)):(len(np.ceil(rand*train))+len(np.ceil(rand*val)))]]
-        testingset = samples[rand[(len(np.ceil(rand*train))+len(np.ceil(rand*val))):]]
+        max = int(len(rand))
+        #print(rand)
+        #print(0.7*len(rand))
+        #print(np.floor(max*0.7))
+
+        traininterval = rand[:math.floor(max*0.7)]
+        valinterval = rand[math.floor(max*0.7):math.floor(max*(0.7+0.2))]
+        testinterval = rand[math.floor(max*(0.7+0.2)):]
+        trainingset = [samples[x] for x in traininterval]
+        validationset = [samples[x] for x in valinterval]
+        testingset = [samples[x] for x in testinterval]
+        #interval = rand[:math.floor(max*0.01)]
+        #print(interval)
+        #trainingset = [samples[x] for x in interval]
+        #print(trainingset)
+        #validationset = samples[rand[np.floor(max*0.7):np.floor(max*(0.7 + 0.2))]]
+        #testingset = samples[rand[np.floor(max*(0.7 + 0.2)):]]
+        #trainingset = samples[rand[0:len(np.floor(len(rand)*train))]]
+        #validationset = samples[rand[len(np.floor(len(rand)*train)):(len(np.floor(len(rand)*train))+len(np.floor(len(rand)*val)))]]
+        #testingset = samples[rand[(len(np.floor(len(rand)*train))+len(np.floor(len(rand)*val))):]]
 
         with open('train.txt', 'w', encoding='utf-8') as f:
             for i in trainingset:
-                f.writelines(trainingset[i])
+                f.writelines(i)
         
         with open('val.txt', 'w', encoding='utf-8') as f:
             for i in validationset:
-                f.writelines(validationset[i])
+                f.writelines(i)
 
         with open('test.txt', 'w', encoding='utf-8') as f:
             for i in testingset:
-                f.writelines(testingset[i])
+                f.writelines(i)
 
 
 

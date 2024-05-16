@@ -12,6 +12,7 @@ def main():
         print('Loading...')
         model = NGramModel.load(model_path)
         print('Done loading.')
+        model = NGramModel.generate_sets("samples.txt") #Added row to call it.
     else:
         print('Teaching...')
         model = NGramModel(3)
