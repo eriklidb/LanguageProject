@@ -59,7 +59,7 @@ class DataSource:
                 vocab.add(word)
         with open(self._vocab_path, 'w', encoding='utf-8') as f:
             for word in vocab:
-                f.writelines(f'{word}\n')
+                f.writelines([f'{word}\n'])
 
     def vocab(self):
         with open(self._vocab_path, 'r', encoding='utf-8') as f:
@@ -112,7 +112,7 @@ class DataSource:
     def save_samples(self, path):
         with open(path, 'w', encoding='utf-8') as f:
             for sample, label in self.labeled_samples():
-                f.writelines(f'{sample},{label}\n')
+                f.writelines([f'{sample},{label}\n'])
 
     
     @staticmethod
@@ -182,11 +182,65 @@ class DataSourceNTComments(DataSource):
             yield s
         return
 
+
     @staticmethod
     def clean(phrase):
         phrase = re.sub('(<br/>|-)', ' ', phrase) # Replace linebreak HTML symbol.
         return DataSource.clean(phrase)
+    
+
+class DataLoader(DataSource):
+    def __init__(self, path):
+        self._path = path
+        flat_path = path.replace('.', '_')
+        self._vocab_path = f'{path}__vocab.txt'
         
+        if os.path.isfile(self._path):
+            stale_vocab = False
+            if os.path.isfile(self._vocab_path):
+                vocab_time = os.path.getmtime(self._vocab_path)
+            else:
+                vocab_time = 0
+
+            if os.path.getmtime(self._path) > vocab_time:
+                stale_vocab = True
+            if stale_vocab:
+                self._ensure_vocab()
+        else:
+            raise ValueError(f'File {path} does not exist')
+
+
+    def _ensure_vocab(self):
+        vocab = set()
+        for sentence in self.sentences():
+            context, label = sentence.split(',')
+            words = context.split()
+            words += [label]
+            for word in words:
+                vocab.add(word)
+        with open(self._vocab_path, 'w', encoding='utf-8') as f:
+            for word in vocab:
+                if word not in Special.all():
+                    f.writelines([f'{word}\n'])
+
+
+    def sentences(self):
+        encoding_type = 'utf-8'
+        if not encoding_type:
+            encoding_type = self.get_encoding_type(path)
+        with open(self._path, 'r', encoding=encoding_type) as f:
+            for line in f.readlines():
+                line = line.strip()
+                yield line
+
+
+    def labeled_samples(self):
+        for sentence in self.sentences():
+            context, label = sentence.split(',')
+            yield context, label
+    
+
+
 
 def context_and_keystrokes(text):
     if text.endswith(' '):

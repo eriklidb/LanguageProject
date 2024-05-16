@@ -171,3 +171,4 @@ model_neural
 model_ngram.txt
 model_*.txt
 model_*/
+*__vocab.txt
