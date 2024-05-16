@@ -6,8 +6,12 @@ import torch
 
 
 class NeuralPredictor(torch.nn.Module):
-    def __init__(self, data_src=None, max_ctx_len=3, epochs=None, device='cpu'):
+    def __init__(self, data_src=None, max_ctx_len=3, epochs=None, device=None):
         super().__init__()
+        if device is None and torch.cuda.is_available():
+            device = 'cuda'
+        elif device is None:
+            device = 'cpu'
         self._device = device
 
         self._w2i = {}
@@ -35,11 +39,11 @@ class NeuralPredictor(torch.nn.Module):
     def train_model(self, data_src, epochs=1):
         # Training example from https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html 
         criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
+        optimizer = torch.optim.Adam(self.parameters())
         running_loss = 0.0
         print('Starting training')
         self.train()
-        batch_size = 32
+        batch_size = 64
         for epoch in range(epochs):
             print('epoch', epoch+1)
             epoch_loss = 0.0
@@ -72,30 +76,19 @@ class NeuralPredictor(torch.nn.Module):
 
 
     def _init_params(self):
-        self._bidirectional = True
-        self._char_emb_size = 10
-        self._word_emb_size = 10
-        if self._word_emb_size % 2 == 1 and self._bidirectional:
-            self._word_emb_size += 1
+        self._word_emb_size = 100
         self._vocab_size = len(self._w2i)
         self._word_emb = torch.nn.Embedding(self._vocab_size, self._word_emb_size)
-        self._char_emb = torch.nn.Embedding(self._char_count, self._char_emb_size)
 
-        char_hidden_size = int(self._word_emb_size / 2) if self._bidirectional else self._word_emb_size
-        word_hidden_size = 50
-        
-        self._char_rnn = torch.nn.GRU(\
-                self._char_emb_size,\
-                char_hidden_size,\
-                bidirectional=self._bidirectional)
+         
+        self._output_size = self._vocab_size - self._NUM_SPECIAL_WORDS
+        word_hidden_size = 100
         
         self._word_rnn = torch.nn.GRU(\
                 self._word_emb_size,\
                 word_hidden_size)
         
-
-        self._output_size = self._vocab_size - self._NUM_SPECIAL_WORDS
-        layer_count = 10
+        layer_count = 0
         layers = []
         for i in range(layer_count):
             layers.append(torch.nn.Linear(word_hidden_size, word_hidden_size))
@@ -183,7 +176,6 @@ class NeuralPredictor(torch.nn.Module):
         
         _, sentence_state = self._word_rnn(ctx_emb)
         sentence_state = sentence_state.squeeze(0)
-
         logits = self._final(sentence_state)
         return logits
 
@@ -226,15 +218,16 @@ class NeuralPredictor(torch.nn.Module):
 
 if __name__ == '__main__':
     from data import DataSource
-    data_path = 'data'
+    data_path = 'data_nytimes'
     data_src = DataSource(data_path, -1)
-    model = NeuralPredictor(data_src, 3, epochs=5)
+    print('Data source constructed')
+    model = NeuralPredictor(data_src, 3, epochs=50)
     print("Save? (Y/n)")
     while True:
         ans = input()
         if ans == 'Y':
             print("Saving...")
-            model.save('neural_model')
+            model.save('model_neural')
             print("Done saving.")
             break
         elif ans == 'n':
