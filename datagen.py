@@ -1,3 +1,5 @@
+# Authored by Patrik Johansson, 2024
+
 import os
 import argparse
 from data import DataSource, DataSourceNTComments
