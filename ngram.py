@@ -1,10 +1,8 @@
 # Authored 2024.5 by Rasmus Nylander (nylanderDev)
 
-import re
 import numpy as np
-import random
-import math
-
+from data import Special, DataSource
+from trie import FreqTrie
 
 class NGramModel:
     def __init__(self, n=2):
@@ -13,13 +11,9 @@ class NGramModel:
         self._w2i = {}
         self._i2w = []
         self._ngram_stores = {}
-        self._UNKNOWN = '<UNKNOWN>'
-        self._START = '<START>'
-        self._SPECIAL_WORDS = [self._UNKNOWN, self._START]
-        self._w2i[self._UNKNOWN] = len(self._i2w)
-        self._i2w.append(self._UNKNOWN)
-        self._w2i[self._START] = len(self._i2w)
-        self._i2w.append(self._START)
+        self._SPECIAL_WORDS = Special.all()
+        for spec in self._SPECIAL_WORDS:
+            self.add_word(spec)
         for i in range(1, n+1):
             self._ngram_stores[i] = NGramStore(i)
 
@@ -31,7 +25,7 @@ class NGramModel:
     
     def learn(self, sentence):
         words = sentence.split()
-        padding = [self._START] * (self._n - 1)
+        padding = [Special.START] * (self._n - 1)
         words = padding + words
         for i in range(len(words)):
             word = words[i]
@@ -44,68 +38,36 @@ class NGramModel:
                 self.add_ngram(kgram)
 
 
+    def learn_sample(self, context, label):
+        words = f'{context} {label}'.split()
+        if len(words) < self._n:
+            padding = [Special.PADDING] * (self._n - len(words))
+            words = padding + words
+        for word in words:
+            self.add_word(word)
+        ids = list(map(lambda w: self._w2i[w], words))
+        for k in range(1, self._n + 1):
+            kgram = ids[-k:]
+            self.add_ngram(kgram)
+
+
     def save(self, path):
         with open(path, 'w', encoding='utf-8') as f:
             vocab_size = len(self._i2w)
             header = f'{self._n} {vocab_size}\n'
-            f.writelines(header)
+            f.writelines([header])
             for i in range(vocab_size):
                 idx = i
                 word = self._i2w[idx]
                 freq = self._ngram_stores[1].freq([idx])
-                f.writelines(f'{idx} {word} {freq}\n')
+                f.writelines([f'{idx} {word} {freq}\n'])
             for k in range(2, self._n+1):
                 kgrams = self._ngram_stores[k].all_ngrams()
                 count = len(kgrams)
                 f.writelines(f'{count}\n')
                 for kgram, freq in kgrams:
                     kgram_str = ' '.join(map(str, kgram))
-                    f.writelines(f'{kgram_str} {freq}\n')
-
-    def generate_sets(path):
-        #train, val, test are supposed to add up to 1.
-        #not the most efficient solution and haven't tested it but should work.
-        samples = []
-        with open(path, 'r', encoding ='utf-8') as f:
-            for line in f:
-                samples.append(line)
-        rand = np.random.permutation([x for x in range(len(samples))])
-        max = int(len(rand))
-        #print(rand)
-        #print(0.7*len(rand))
-        #print(np.floor(max*0.7))
-
-        traininterval = rand[:math.floor(max*0.7)]
-        valinterval = rand[math.floor(max*0.7):math.floor(max*(0.7+0.2))]
-        testinterval = rand[math.floor(max*(0.7+0.2)):]
-        trainingset = [samples[x] for x in traininterval]
-        validationset = [samples[x] for x in valinterval]
-        testingset = [samples[x] for x in testinterval]
-        #interval = rand[:math.floor(max*0.01)]
-        #print(interval)
-        #trainingset = [samples[x] for x in interval]
-        #print(trainingset)
-        #validationset = samples[rand[np.floor(max*0.7):np.floor(max*(0.7 + 0.2))]]
-        #testingset = samples[rand[np.floor(max*(0.7 + 0.2)):]]
-        #trainingset = samples[rand[0:len(np.floor(len(rand)*train))]]
-        #validationset = samples[rand[len(np.floor(len(rand)*train)):(len(np.floor(len(rand)*train))+len(np.floor(len(rand)*val)))]]
-        #testingset = samples[rand[(len(np.floor(len(rand)*train))+len(np.floor(len(rand)*val))):]]
-
-        with open('train.txt', 'w', encoding='utf-8') as f:
-            for i in trainingset:
-                f.writelines(i)
-        
-        with open('val.txt', 'w', encoding='utf-8') as f:
-            for i in validationset:
-                f.writelines(i)
-
-        with open('test.txt', 'w', encoding='utf-8') as f:
-            for i in testingset:
-                f.writelines(i)
-
-
-
-
+                    f.writelines([f'{kgram_str} {freq}\n'])
 
 
     def load(path):
@@ -230,20 +192,14 @@ class NGramModel:
 
         
     def transform_input(self, phrase):
-        phrase = self.clean(phrase)
+        phrase = DataSource.clean(phrase)
         words = phrase.split()
-        words = map(lambda w: w if w in self._w2i else self._UNKNOWN, words)
-        padding = [self._START] * (self._n - 1)
+        words = map(lambda w: w if w in self._w2i else Special.UNKNOWN, words)
+        padding = [Special.START] * (self._n - 1)
         words = padding + list(words)
         indices = list(map(lambda w: self._w2i[w], words))
         return indices
-
-    def clean(self, phrase):
-        phrase = phrase.strip().lower()
-        phrase = re.sub('[^a-z\'\s]', '', phrase)
-        phrase = re.sub('\s+', ' ', phrase)
-        return phrase
-
+    
 
 class NGramStore:
     def __init__(self, n):
@@ -267,16 +223,13 @@ class NGramStore:
 
 
     def _stub_dict(self, stubgram, create=True):
-        curr = self._root
-        for i in range(self._n - 1):
-            idx = stubgram[i]
-            if idx not in curr:
-                if create:
-                    curr[idx] = {}
-                else:
-                    return None
-            curr = curr[idx]
-        return curr
+        idx = str(stubgram)
+        if idx not in self._root:
+            if create:
+                self._root[idx] = {}
+            else:
+                return None
+        return self._root[idx]
 
 
     def unigrams(self, stubgram):
@@ -304,107 +257,10 @@ class NGramStore:
 
     def all_ngrams(self):
         ngrams = []
-        queue = [([], self._root)]
-        while len(queue) > 0:
-            stub, curr = queue.pop(0)
-            if len(stub) == self._n:
-                ngrams.append((stub, curr))
-            else:
-                for idx in curr:
-                    next_ = curr[idx]
-                    next_stub = stub.copy()
-                    next_stub.append(idx)
-                    queue.append((next_stub, next_))
+        for stub in self._root:
+            stub_list = stub.strip('[]').split(', ')
+            for last in self._root[stub]:
+                ngrams.append((stub_list + [last], self._root[stub][last]))
         return ngrams
 
 
-class FreqTrie:
-    def __init__(self):
-        self._root = FreqTrieNode()
-    
-
-    def add_word(self, word, n=1):
-        self._root.add_suffix(word, n)
-
-
-    def get_words(self, prefix):
-        subroot = self._root.child(prefix, create=False)
-        if subroot is None:
-            return (0, [], [])
-
-        nodes = subroot.descendants()
-        total_freqs = subroot.subfreq()
-        words = []
-        freqs = []
-
-        for node in nodes:
-            if node.freq() > 0:
-                words.append(node.word())
-                freqs.append(node.freq())
-
-        return (total_freqs, words, freqs)
-
-
-
-class FreqTrieNode:
-    def __init__(self, word=None):
-        if word is None:
-            self._word = ''
-        else:
-            self._word = word
-        self._freq = 0
-        self._subfreq = 0
-        self._children = {}
-
-    
-    def add_suffix(self, suffix, n=1):
-        if suffix == '':
-            self.increment_freq(n)
-        else:
-            self.increment_subfreq(n)
-            head = suffix[0]
-            tail = suffix[1:]
-            self.child(head).add_suffix(tail)
-    
-
-    def increment_freq(self, n=1):
-        self._freq += n
-
-    
-    def increment_subfreq(self, n=1):
-        self._subfreq += n
-
-
-    def word(self):
-        return self._word
-
-
-    def freq(self):
-        return self._freq
-
-
-    def subfreq(self):
-        return self._subfreq
-
-
-    def child(self, suffix, create=True):
-        if suffix == '':
-            return self
-        else:
-            head = suffix[0]
-            tail = suffix[1:]
-            if head not in self._children:
-                if not create:
-                    return None
-                child_word = self._word + head
-                child = FreqTrieNode(child_word)
-                self._children[head] = child
-            return self._children[head].child(tail)
-
-
-    def descendants(self):
-        nodes = []
-        for child in self._children.values():
-            nodes.append(child)
-            nodes.extend(child.descendants())
-        return nodes
