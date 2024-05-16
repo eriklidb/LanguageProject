@@ -177,14 +177,14 @@ class DataSourceNTComments(DataSource):
         split = re.split('\\.(?=(\\s+[A-Z])|$)', line)
         for s in split:
             # Remove HTML tags and other junk.
-            if not s or s.startswith(' ') or 'href=' in s or 'text=' in s or 'target=' in s or '&amp' in s or 'http' in s or "www." in s:
+            if not s or s.startswith(' ') or '<a' in s or 'href=' in s or 'text=' in s or 'target=' in s or '&amp' in s or 'http' in s or "www." in s:
                 continue
             yield s
         return
 
     @staticmethod
     def clean(phrase):
-        phrase = re.sub('<br/>', ' ', phrase) # Replace linebreak HTML symbol.
+        phrase = re.sub('(<br/>|-)', ' ', phrase) # Replace linebreak HTML symbol.
         return DataSource.clean(phrase)
         
 

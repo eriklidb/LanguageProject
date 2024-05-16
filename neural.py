@@ -22,9 +22,6 @@ class NeuralPredictor(torch.nn.Module):
         self.add_word(Special.PADDING)
         self.add_word(Special.UNKNOWN)
         self.add_word(Special.START)
-        CHARS = Special.all() + ['\''] + list(string.ascii_letters) + list(string.punctuation)
-        self._c2i = {c:i for i,c in enumerate(CHARS)}
-        self._char_count = len(CHARS)
 
         if data_src is not None:
             self.learn_vocab(data_src)
@@ -43,7 +40,7 @@ class NeuralPredictor(torch.nn.Module):
         running_loss = 0.0
         print('Starting training')
         self.train()
-        batch_size = 64
+        batch_size = 16
         for epoch in range(epochs):
             print('epoch', epoch+1)
             epoch_loss = 0.0
@@ -52,7 +49,7 @@ class NeuralPredictor(torch.nn.Module):
                 # get the inputs; data is a list of [inputs, labels]
                 contexts, labels = data #= NeuralPredictor.prep_sample(data)
                 labels = list(map(lambda l: Special.UNKNOWN if l not in self._w2i else l, labels))
-                labels = list(map(lambda l: self._w2i[l] - self._NUM_SPECIAL_WORDS, labels))
+                labels = list(map(lambda l: self._w2i[l], labels))
                 labels = torch.tensor(labels).to(self._device)
                 
                 # zero the parameter gradients
@@ -81,7 +78,7 @@ class NeuralPredictor(torch.nn.Module):
         self._word_emb = torch.nn.Embedding(self._vocab_size, self._word_emb_size)
 
          
-        self._output_size = self._vocab_size - self._NUM_SPECIAL_WORDS
+        self._output_size = self._vocab_size
         word_hidden_size = 100
         
         self._word_rnn = torch.nn.GRU(\
@@ -188,7 +185,7 @@ class NeuralPredictor(torch.nn.Module):
 
     def completions(self, context, keystrokes, n=1, deterministic=True):
         _, candidates, _ = self._trie.get_words(keystrokes)
-        candidate_idx = list(map(lambda cand: self._w2i[cand] - self._NUM_SPECIAL_WORDS, candidates))
+        candidate_idx = list(map(lambda cand: self._w2i[cand], candidates))
         prob = torch.flatten(self(context))[candidate_idx]
         prob = torch.nn.functional.softmax(prob, dim=0)
         prob = prob.tolist()
@@ -218,8 +215,8 @@ class NeuralPredictor(torch.nn.Module):
 
 if __name__ == '__main__':
     from data import DataSource, DataSourceNTComments
-    data_path = 'data_nytimes'
-    if data_path in ["data_nytimes", "./data_nytimes", "./data_nytimes/", ".\\data_nytimes", ".\\data_nytimes\\"]:
+    data_path = 'data'
+    if 'nyt' in data_path.lower():
         data_src = DataSourceNTComments(data_path, 300_000)
     else:
         data_src = DataSource(data_path, -1)

@@ -26,7 +26,7 @@ def main():
         model = NGramModel.load(model_path)
         print('Done loading.')
     else:
-        if data_path in ["data_nytimes", "./data_nytimes", "./data_nytimes/", ".\\data_nytimes", ".\\data_nytimes\\"]:
+        if 'nyt' in data_path.lower():
             source = DataSourceNTComments(data_path, num_datapoints)
         else:
             source = DataSource(data_path, num_datapoints)
