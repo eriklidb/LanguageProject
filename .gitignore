@@ -162,6 +162,7 @@ cython_debug/
 # Custom
 data
 data_nytimes
+data_*/
 model.txt
 *.csv
 samples.txt

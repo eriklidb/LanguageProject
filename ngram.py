@@ -199,7 +199,7 @@ class NGramModel:
         words = padding + list(words)
         indices = list(map(lambda w: self._w2i[w], words))
         return indices
-
+    
 
 class NGramStore:
     def __init__(self, n):
@@ -262,4 +262,5 @@ class NGramStore:
             for last in self._root[stub]:
                 ngrams.append((stub_list + [last], self._root[stub][last]))
         return ngrams
+
 

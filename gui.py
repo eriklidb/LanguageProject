@@ -148,3 +148,5 @@ if __name__ == '__main__':
     window.insert_word_probability('N-gram', ngram_probabilities)
     window.insert_word_probability('Neural network', neural_probabilities)
     window.mainloop()
+
+
