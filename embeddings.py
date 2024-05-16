@@ -20,11 +20,11 @@ def embeddings():
     word_to_idx = dict(int)
     max_len = 0
     if os.path.isfile(vocab_file):
-        with open('embedding.txt', encoding = 'utf8') as f:
-            for word in f:
-                word_to_idx[word] = len(word_to_idx)
-                if len(word) > max_len:
-                    max_len = len(word)
+        with open(vocab_file) as f:
+            #word_to_idx = {word: i for i, word in enumerate(f)}
+            max_len=len(max(f,key=len))
+            print(max_len)
+            word_to_idx = {word: len(i) for i, word in enumerate(f)}
         embeddings = nn.Embedding(len(word_to_idx), max_len)
         embed_tensor = torch.tensor([word_to_idx], dtype=torch.long)
         # if we want to se our results, the look up:

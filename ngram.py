@@ -2,6 +2,7 @@
 
 import re
 import numpy as np
+import random
 
 
 class NGramModel:
@@ -59,6 +60,34 @@ class NGramModel:
                 for kgram, freq in kgrams:
                     kgram_str = ' '.join(map(str, kgram))
                     f.writelines(f'{kgram_str} {freq}\n')
+
+    def generate_sets(self, path, train, val, test):
+        #train, val, test are supposed to add up to 1.
+        #not the most efficient solution and haven't tested it but should work.
+        samples = []
+        with open(path, 'r', encoding ='utf-8') as f:
+            for line in f:
+                samples.append(line)
+        rand = np.random.permutation([x for x in range(len(samples))])
+        trainingset = samples[rand[0:len(np.ceil(rand*train))]]
+        validationset = samples[rand[len(np.ceil(rand*train)):(len(np.ceil(rand*train))+len(np.ceil(rand*val)))]]
+        testingset = samples[rand[(len(np.ceil(rand*train))+len(np.ceil(rand*val))):]]
+
+        with open('train.txt', 'w', encoding='utf-8') as f:
+            for i in trainingset:
+                f.writelines(trainingset[i])
+        
+        with open('val.txt', 'w', encoding='utf-8') as f:
+            for i in validationset:
+                f.writelines(validationset[i])
+
+        with open('test.txt', 'w', encoding='utf-8') as f:
+            for i in testingset:
+                f.writelines(testingset[i])
+
+
+
+
 
 
     def load(path):
