@@ -22,7 +22,7 @@ class Special:
 
 
 class DataSource:
-    def __init__(self, path, num_datapoints):
+    def __init__(self, path, num_datapoints=None):
         self.num_datapoints = num_datapoints
         if os.path.isdir(path):
             self._path = path
@@ -52,11 +52,17 @@ class DataSource:
 
     def _ensure_vocab(self):
         vocab = set()
+        counts = {}
+        min_freq = 2
         for sentence in self.sentences():
             sentence = self.clean(sentence)
             words = sentence.split()
             for word in words:
-                vocab.add(word)
+                if word not in counts:
+                    counts[word] = 0
+                counts[word] += 1
+                if counts[word] >= min_freq:
+                    vocab.add(word)
         with open(self._vocab_path, 'w', encoding='utf-8') as f:
             for word in vocab:
                 f.writelines([f'{word}\n'])
@@ -84,6 +90,7 @@ class DataSource:
 
 
     def labeled_samples(self):
+        count = 0
         for sentence in self.sentences():
             sentence = f'{Special.START} {sentence}'
             words = sentence.split()
@@ -91,7 +98,10 @@ class DataSource:
             for i in range(1, sentence_len):
                 kgram_label = words[i]
                 kgram_context = ' '.join(words[:i])
+                count += 1
                 yield kgram_context, kgram_label
+                if self.num_datapoints != None and count > self.num_datapoints:
+                    return
 
 
     def labeled_samples_batch(self, batch_size, discard_trailing=False):

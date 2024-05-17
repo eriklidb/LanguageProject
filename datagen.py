@@ -33,15 +33,15 @@ def generate_sets(path, output_dir=None):
 
     with open(train_path, 'w', encoding='utf-8') as f:
         for i in trainingset:
-            f.writelines(i)
+            f.writelines([i])
 
     with open(val_path, 'w', encoding='utf-8') as f:
         for i in validationset:
-            f.writelines(i)
+            f.writelines([i])
 
     with open(test_path, 'w', encoding='utf-8') as f:
         for i in testingset:
-            f.writelines(i)
+            f.writelines([i])
 
 
 def main():

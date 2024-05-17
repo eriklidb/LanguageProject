@@ -41,35 +41,39 @@ class NeuralPredictor(torch.nn.Module):
         print('Starting training')
         self.train()
         batch_size = 16
-        for epoch in range(epochs):
-            print('epoch', epoch+1)
-            epoch_loss = 0.0
-            running_loss = 0.0
-            for i, data in enumerate(data_src.labeled_samples_batch(batch_size)):
-                # get the inputs; data is a list of [inputs, labels]
-                contexts, labels = data #= NeuralPredictor.prep_sample(data)
-                labels = list(map(lambda l: Special.UNKNOWN if l not in self._w2i else l, labels))
-                labels = list(map(lambda l: self._w2i[l], labels))
-                labels = torch.tensor(labels).to(self._device)
+        try:
+            for epoch in range(epochs):
+                print('epoch', epoch+1)
+                epoch_loss = 0.0
+                running_loss = 0.0
+                for i, data in enumerate(data_src.labeled_samples_batch(batch_size)):
+                    # get the inputs; data is a list of [inputs, labels]
+                    contexts, labels = data #= NeuralPredictor.prep_sample(data)
+                    labels = list(map(lambda l: Special.UNKNOWN if l not in self._w2i else l, labels))
+                    labels = list(map(lambda l: self._w2i[l], labels))
+                    labels = torch.tensor(labels).to(self._device)
                 
-                # zero the parameter gradients
-                optimizer.zero_grad()
+                    # zero the parameter gradients
+                    optimizer.zero_grad()
 
-                # forward + backward + optimize
-                outputs = self(contexts)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
+                    # forward + backward + optimize
+                    outputs = self(contexts)
+                    loss = criterion(outputs, labels)
+                    loss.backward()
+                    optimizer.step()
 
-                # print statistics
-                running_loss += loss.item()
-                epoch_loss += loss.item()
-                if i % 200 == 199:    # print every 200 mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
-                    running_loss = 0.0
-            print(f'[epoch {epoch + 1}] loss: {epoch_loss / (i+1):.3f}')
-        self.eval()
-        print('Finished Training')
+                    # print statistics
+                    running_loss += loss.item()
+                    epoch_loss += loss.item()
+                    if i % 200 == 199:    # print every 200 mini-batches
+                        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
+                        running_loss = 0.0
+                print(f'[epoch {epoch + 1}] loss: {epoch_loss / (i+1):.3f}')
+            self.eval()
+            print('Finished Training')
+        except KeyboardInterrupt:
+            self.eval()
+            print('Finished Training early')
 
 
     def _init_params(self):
@@ -79,12 +83,17 @@ class NeuralPredictor(torch.nn.Module):
 
          
         self._output_size = self._vocab_size
-        word_hidden_size = 100
-        
+        word_hidden_size = 50
+        rnn_layers = 1
+
+
         self._word_rnn = torch.nn.GRU(\
                 self._word_emb_size,\
-                word_hidden_size)
-        
+                word_hidden_size,\
+                num_layers=rnn_layers)
+
+        self._dropout = torch.nn.Dropout()
+
         layer_count = 0
         layers = []
         for i in range(layer_count):
@@ -93,13 +102,18 @@ class NeuralPredictor(torch.nn.Module):
 
         self._final = torch.nn.Sequential(*layers,\
                 torch.nn.Linear(\
-                word_hidden_size,\
+                rnn_layers * word_hidden_size,\
                 self._output_size))
 
         self.to(self._device)
 
     
-    def load(path, device='cpu'):
+    def load(path, device=None):
+        if device is None and torch.cuda.is_available():
+            device = 'cuda'
+        elif device is None:
+            device = 'cpu'
+        
         model = NeuralPredictor(device=device)
         
         state = os.path.join(path, 'state.pt')
@@ -172,7 +186,10 @@ class NeuralPredictor(torch.nn.Module):
         ctx_emb = self._word_emb(ctx).float()
         
         _, sentence_state = self._word_rnn(ctx_emb)
-        sentence_state = sentence_state.squeeze(0)
+        #sentence_state = sentence_state[0]
+        batch_size = sentence_state.shape[1]
+        sentence_state = sentence_state.reshape((batch_size, -1))
+        #sentence_state = self._dropout(sentence_state)
         logits = self._final(sentence_state)
         return logits
 
