@@ -30,6 +30,7 @@ def main():
         #    source = DataSourceNTComments(data_path, num_datapoints)
         #else:
         #    source = DataSource(data_path, num_datapoints)
+        #source.save_samples('samples.txt')
         source = DataLoader(data_path)
         print('Teaching...')
         model = NGramModel(k)

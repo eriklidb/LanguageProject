@@ -94,7 +94,7 @@ class NeuralPredictor(torch.nn.Module):
 
         self._dropout = torch.nn.Dropout()
 
-        layer_count = 0
+        layer_count = 0 
         layers = []
         for i in range(layer_count):
             layers.append(torch.nn.Linear(word_hidden_size, word_hidden_size))
@@ -189,7 +189,7 @@ class NeuralPredictor(torch.nn.Module):
         #sentence_state = sentence_state[0]
         batch_size = sentence_state.shape[1]
         sentence_state = sentence_state.reshape((batch_size, -1))
-        #sentence_state = self._dropout(sentence_state)
+        sentence_state = self._dropout(sentence_state)
         logits = self._final(sentence_state)
         return logits
 
