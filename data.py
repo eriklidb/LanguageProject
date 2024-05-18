@@ -132,6 +132,7 @@ class DataSource:
             encoding_type = detect(f.read())['encoding']
         return encoding_type
 
+
     @staticmethod
     def split(line):
         split = re.split('\\.(?=(\\s+[A-Z])|$)', line)
