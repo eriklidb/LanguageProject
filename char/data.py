@@ -261,7 +261,7 @@ def context_and_keystrokes(text):
         keystrokes = ' '.join(text.split()[-1])
     else:
         keystrokes = ''
-    keystrokes = f'{Special.START} {keystrokes}'
+    keystrokes = f'{keystrokes}'
     return keystrokes, ''
 
 
