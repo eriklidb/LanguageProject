@@ -11,14 +11,14 @@ def main():
     parser.add_argument('-m', type=str, default='./model.txt', help='Model file path')
     parser.add_argument('-d', type=str, default='./data', help='Dataset directory path')
     parser.add_argument('-n', type=int, help='Number of datapoints to read. Default behavior is reading all the data.')
+    parser.add_argument('-k', type=int, help='k-gram.')
     parser.add_argument('-s', action='store_true', help='Save the data.')
     arguments = parser.parse_args()
     model_path = arguments.m
     data_path = arguments.d
     num_datapoints = arguments.n
     save_data = arguments.s
-    
-    k = 2
+    k = arguments.k
     #source = DataSource(data_path, -1)
     #source.save_samples('samples.txt')
     if os.path.isfile(model_path):
