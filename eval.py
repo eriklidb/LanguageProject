@@ -18,14 +18,20 @@ def evaluate(model, data_src, k=None):
         k = [1]
     max_k = max(k)
     print(k)
+    keystrokes_total = 0
+    keystrokes_saved = [0] * len(k)
     total = 0
     correct = [0] * len(k)
     acc = [0] * len(k)
     for ctx, label in data_src.labeled_samples():
         pred = predict(model, ctx, max_k)
+        ctx_len = len(ctx.split()) - 1
+        keystrokes_total += len(label)
         for i in range(len(k)):
             if label in pred[:k[i]]:
                 correct[i] += 1
+                keystrokes_saved[i] += (len(label) - ctx_len)
+
         total += 1
         if total % 100 == 0:
             print(f'context: {ctx}')
@@ -33,6 +39,9 @@ def evaluate(model, data_src, k=None):
             print(f'predicted: {pred}')
             for i in range(len(acc)):
                 print(f'SO FAR: accuracy (top {k[i]}):\t {correct[i] / total}\t [{correct[i]} out of {total}]')
+            print('---')
+            for i in range(len(acc)):
+                print(f'Assuming char-level: % keystrokes saved (top {k[i]}):\t {keystrokes_saved[i] / keystrokes_total}\t [{keystrokes_saved[i]} out of {keystrokes_total}]')
             
             print(f'evaled {total} datapoints')
     for i in range(len(k)):
