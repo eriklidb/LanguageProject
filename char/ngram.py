@@ -4,8 +4,17 @@ import numpy as np
 from data import Special, DataSource
 from trie import FreqTrie
 
+
+def gen_weights(n, factor=0.99, w=1.0):
+    if n == 1:
+        return [w]
+    else:
+        return gen_weights(n-1, (1.0 - factor) * w) + [factor * w]
+
+
 class NGramModel:
     def __init__(self, n=2):
+        self._lambda = gen_weights(n+1, factor=0.5)
         self._n = n
         self._trie = FreqTrie()
         self._w2i = {}
@@ -150,19 +159,11 @@ class NGramModel:
                 else:
                     probs[k][i] = 1 / len(candidates)
 
-        # These should be lambda parameters FIXME
-        BASE_WEIGHT = 0.00001
-        weights = [BASE_WEIGHT] * len(candidates)
-        N_WEIGHT = 0.99
-        DEFAULT_WEIGHT = 0.01 - BASE_WEIGHT
+        weights = [self._lambda[0]] * len(candidates)
         total_weight = 0
         for i in range(len(candidates)):
             for k in range(len(context)+1):
-                if k == self._n - 1:
-                    weights[i] += N_WEIGHT * probs[k][i] 
-                else:
-                    weights[i] += DEFAULT_WEIGHT * probs[k][i]
-                
+                weights[i] += self._lambda[k+1] * probs[k][i]
             total_weight += weights[i]
         
         for i in range(len(candidates)):

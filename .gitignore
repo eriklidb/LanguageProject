@@ -169,6 +169,9 @@ samples.txt
 neural_model
 model_neural
 model_ngram.txt
+*gram.txt
+char_data*/
+*strat/
 model_ngram*
 model_*.txt
 model_*/
