@@ -146,7 +146,6 @@ def main():
     parser.add_argument('-k', type=int, help='Max label vocab size.')
     parser.add_argument('-t', action='store_true', help='Stratify the data.')
     arguments = parser.parse_args()
-
     out_dir = arguments.o
     data_path = arguments.d
     samples_path = arguments.s

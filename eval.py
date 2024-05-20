@@ -29,6 +29,7 @@ def evaluate(model, data_src, k=None):
         keystrokes_total += len(label)
         for i in range(len(k)):
             if label in pred[:k[i]]:
+                #print('--- correctly predicted:', label)
                 correct[i] += 1
                 keystrokes_saved[i] += (len(label) - ctx_len)
 

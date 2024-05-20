@@ -6,14 +6,14 @@ import torch
 
 
 class NeuralPredictor(torch.nn.Module):
-    def __init__(self, data_src=None, max_ctx_len=3, epochs=None, device=None):
+    def __init__(self, lstm=True, data_src=None, max_ctx_len=3, epochs=None, device=None):
         super().__init__()
         if device is None and torch.cuda.is_available():
             device = 'cuda'
         elif device is None:
             device = 'cpu'
         self._device = device
-
+        self._lstm = lstm
         self._w2i = {}
         self._i2w = []
         self._trie = FreqTrie()
@@ -86,11 +86,18 @@ class NeuralPredictor(torch.nn.Module):
         word_hidden_size = 50
         rnn_layers = 1
 
-
-        self._word_rnn = torch.nn.GRU(\
-                self._word_emb_size,\
-                word_hidden_size,\
-                num_layers=rnn_layers)
+        if self._lstm:
+            self._word_rnn = torch.nn.LSTM(\
+                    self._word_emb_size,\
+                    word_hidden_size,\
+                    num_layers=rnn_layers,\
+                    bidirectional=False)
+        else:
+            self._word_rnn = torch.nn.GRU(\
+                    self._word_emb_size,\
+                    word_hidden_size,\
+                    num_layers=rnn_layers,\
+                    bidirectional=False)
 
         self._dropout = torch.nn.Dropout()
 
@@ -114,10 +121,13 @@ class NeuralPredictor(torch.nn.Module):
         elif device is None:
             device = 'cpu'
         
-        model = NeuralPredictor(device=device)
-        
+
+        lstm_path = os.path.join(path, 'lstm.bool')
+        lstm = os.path.isfile(lstm_path)
         state = os.path.join(path, 'state.pt')
         words = os.path.join(path, 'words.txt')
+        
+        model = NeuralPredictor(lstm=lstm, device=device)
         for f in [state, words]:
             if not os.path.isfile(f):
                 raise ValueError(f'Could not find model at path {path}')
@@ -137,6 +147,7 @@ class NeuralPredictor(torch.nn.Module):
     def save(self, path):
         state = os.path.join(path, 'state.pt')
         words = os.path.join(path, 'words.txt')
+        lstm = os.path.join(path, 'lstm.bool')
         if not os.path.isdir(path):
             os.mkdir(path)
         torch.save(self.state_dict(), state)
@@ -145,6 +156,8 @@ class NeuralPredictor(torch.nn.Module):
             for word in self._i2w[self._NUM_SPECIAL_WORDS:]:
                 f.writelines([f'{word}\n'])
 
+        if self._lstm:
+            open(lstm, 'a').close()
     
     def add_word(self, word):
         if word not in self._w2i:
@@ -186,7 +199,8 @@ class NeuralPredictor(torch.nn.Module):
         ctx_emb = self._word_emb(ctx).float()
         
         _, sentence_state = self._word_rnn(ctx_emb)
-        #sentence_state = sentence_state[0]
+        if self._lstm:
+            sentence_state = sentence_state[0]
         batch_size = sentence_state.shape[1]
         sentence_state = sentence_state.reshape((batch_size, -1))
         sentence_state = self._dropout(sentence_state)
