@@ -2,10 +2,12 @@
 # Date: 2024.
 
 import tkinter as tk
+import argparse
 from word_probabilities import WordProbabilities 
 from ngram_probabilities import NGramProbabilities
-import argparse
+from char_ngram_probabilities import CharNGramProbabilities
 from neural_probabilities import NeuralProbabilities
+from char_neural_probabilities import CharNeuralProbabilities
 
 class Window(tk.Tk):
     word_probabilities: dict[str, WordProbabilities] = {}
@@ -133,20 +135,26 @@ class Window(tk.Tk):
             
 # Start the event loop.
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Start word prediciton GUI.', usage='\n* -n Number of word suggestions to display. --ngram-modal and --neural-model specify paths to said models.')
+    parser = argparse.ArgumentParser(description='Start word prediciton GUI.', usage='\n* -n Number of word suggestions to display.')
     parser.add_argument('-n', type=int, default=20, help='Number of word suggestions to display.')
-    parser.add_argument('--ngram-model', type=str, default='model_ngram.txt', help='Path to n-gram model.')
-    parser.add_argument('--neural-model', type=str, default='model_neural', help='Path to neural network model.')
+    parser.add_argument('--model-char-ngram', type=str, default='model_char_ngram.txt', help='Path to N-gram character model.')
+    parser.add_argument('--model-char-neural', type=str, default='model_char_neural', help='Path to neural network character model.')
+    parser.add_argument('--model-word-ngram', type=str, default='model_word_ngram.txt', help='Path to N-gram word model.')
+    parser.add_argument('--model-word-neural', type=str, default='model_word_neural', help='Path to neural network word model.')
     arguments = parser.parse_args()
     num_word_displayed = arguments.n
-    ngram_path = arguments.ngram_model
-    neural_path = arguments.neural_model
+    path_char_ngram = arguments.ngram_model
+    path_char_neural = arguments.neural_model
+    path_word_ngram = arguments.ngram_model
+    path_word_neural = arguments.neural_model
 
-    ngram_probabilities = NGramProbabilities(ngram_path)
-    neural_probabilities = NeuralProbabilities(neural_path)
+    probs_char_ngram = CharNGramProbabilities(path_char_ngram)
+    probs_char_neural = CharNeuralProbabilities(path_char_neural)
+    probs_word_ngram = NGramProbabilities(path_word_ngram)
+    probs_word_neural = NeuralProbabilities(path_word_neural)
     window = Window(num_words_displayed=num_word_displayed)
-    window.insert_word_probability('N-gram', ngram_probabilities)
-    window.insert_word_probability('Neural network', neural_probabilities)
+    window.insert_word_probability('Character N-gram', probs_char_ngram)
+    window.insert_word_probability('Character neural network', probs_char_neural)
+    window.insert_word_probability('Word N-gram', probs_word_ngram)
+    window.insert_word_probability('Word neural network', probs_word_neural)
     window.mainloop()
-
-
