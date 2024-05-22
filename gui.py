@@ -136,7 +136,7 @@ class Window(tk.Tk):
 # Start the event loop.
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Start word prediciton GUI.', usage='\n* -n Number of word suggestions to display.')
-    parser.add_argument('-n', type=int, default=20, help='Number of word suggestions to display.')
+    parser.add_argument('-n', type=int, default=10, help='Number of word suggestions to display.')
     parser.add_argument('--model-char-ngram', type=str, default='_fair_char_10gram.txt', help='Path to N-gram character model.')
     parser.add_argument('--model-char-neural', type=str, default='_neural_char_e20', help='Path to neural network character model.')
     parser.add_argument('--model-word-ngram', type=str, default='_fair_10gram.txt', help='Path to N-gram word model.')
