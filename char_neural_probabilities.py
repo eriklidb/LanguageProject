@@ -11,5 +11,6 @@ class CharNeuralProbabilities(WordProbabilities):
 
     def most_likely_words(self, input_str: str, n: int) -> tuple[list[str], list[float]]:
         context, keystrokes = context_and_keystrokes(input_str)
+        context = f'<S> {context}'
         return self._model.completions(context, keystrokes, n)
 
