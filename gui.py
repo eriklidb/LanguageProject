@@ -140,7 +140,7 @@ if __name__ == '__main__':
     parser.add_argument('--model-char-ngram', type=str, default='_fair_char_10gram.txt', help='Path to N-gram character model.')
     parser.add_argument('--model-char-neural', type=str, default='_neural_char_e20', help='Path to neural network character model.')
     parser.add_argument('--model-word-ngram', type=str, default='_fair_10gram.txt', help='Path to N-gram word model.')
-    parser.add_argument('--model-word-neural', type=str, default='_lstm_e20', help='Path to neural network word model.')
+    parser.add_argument('--model-word-neural', type=str, default='_lstm_e10', help='Path to neural network word model.')
     arguments = parser.parse_args()
     num_word_displayed = arguments.n
     path_char_ngram = arguments.model_char_ngram
