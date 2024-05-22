@@ -137,16 +137,16 @@ class Window(tk.Tk):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Start word prediciton GUI.', usage='\n* -n Number of word suggestions to display.')
     parser.add_argument('-n', type=int, default=20, help='Number of word suggestions to display.')
-    parser.add_argument('--model-char-ngram', type=str, default='model_char_ngram.txt', help='Path to N-gram character model.')
-    parser.add_argument('--model-char-neural', type=str, default='model_char_neural', help='Path to neural network character model.')
-    parser.add_argument('--model-word-ngram', type=str, default='model_word_ngram.txt', help='Path to N-gram word model.')
-    parser.add_argument('--model-word-neural', type=str, default='model_word_neural', help='Path to neural network word model.')
+    parser.add_argument('--model-char-ngram', type=str, default='_fair_char_10gram.txt', help='Path to N-gram character model.')
+    parser.add_argument('--model-char-neural', type=str, default='_neural_char_e20', help='Path to neural network character model.')
+    parser.add_argument('--model-word-ngram', type=str, default='_fair_10gram.txt', help='Path to N-gram word model.')
+    parser.add_argument('--model-word-neural', type=str, default='_lstm_e20', help='Path to neural network word model.')
     arguments = parser.parse_args()
     num_word_displayed = arguments.n
-    path_char_ngram = arguments.ngram_model
-    path_char_neural = arguments.neural_model
-    path_word_ngram = arguments.ngram_model
-    path_word_neural = arguments.neural_model
+    path_char_ngram = arguments.model_char_ngram
+    path_char_neural = arguments.model_char_neural
+    path_word_ngram = arguments.model_word_ngram
+    path_word_neural = arguments.model_word_neural
 
     probs_char_ngram = CharNGramProbabilities(path_char_ngram)
     probs_char_neural = CharNeuralProbabilities(path_char_neural)
